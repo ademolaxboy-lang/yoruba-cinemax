@@ -26,6 +26,13 @@ export interface WebsiteSettings {
   name: string;
   tagline: string;
   adminPassword: string;
+  contactEmail: string;
+  advertiseEmail: string;
+  copyrightYear: number;
+  facebookUrl: string;
+  twitterUrl: string;
+  instagramUrl: string;
+  youtubeUrl: string;
 }
 
 export type SortOption = 'newest' | 'oldest' | 'rating' | 'popularity';

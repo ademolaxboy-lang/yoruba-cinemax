@@ -11,7 +11,14 @@ const STORAGE_KEYS = {
 const DEFAULT_SETTINGS: WebsiteSettings = {
   name: 'Yoruba Cinemax',
   tagline: 'Nigeria\'s Premier Yoruba Movie Destination',
-  adminPassword: 'Ademola5569'
+  adminPassword: 'Ademola5569',
+  contactEmail: 'contact@yorubacinemax.com',
+  advertiseEmail: 'advertise@yorubacinemax.com',
+  copyrightYear: 2025,
+  facebookUrl: '',
+  twitterUrl: '',
+  instagramUrl: '',
+  youtubeUrl: ''
 };
 
 // Movie storage functions

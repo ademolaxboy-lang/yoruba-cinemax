@@ -9,6 +9,10 @@ import HomePage from "./pages/HomePage";
 import MovieDetails from "./pages/MovieDetails";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import ContactUs from "./pages/ContactUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AdvertiseWithUs from "./pages/AdvertiseWithUs";
+import DMCARemoval from "./pages/DMCARemoval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +39,10 @@ const App = () => {
             <Route path="/movie/:id" element={<MovieDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/advertise" element={<AdvertiseWithUs />} />
+            <Route path="/dmca" element={<DMCARemoval />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

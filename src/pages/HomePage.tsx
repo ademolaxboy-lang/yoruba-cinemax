@@ -1,26 +1,57 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Movie, FilterCategory, SortOption } from '@/types/movie';
-import { getMovies } from '@/utils/storage';
+import { getMovies, searchMovies } from '@/utils/supabase-storage';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import MovieCard from '@/components/MovieCard';
 import Filters from '@/components/Filters';
 import Pagination from '@/components/Pagination';
+import SearchBar from '@/components/SearchBar';
+import PreLoader from '@/components/PreLoader';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const MOVIES_PER_PAGE = 8;
 
 const HomePage = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [category, setCategory] = useState<FilterCategory>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [releaseYear, setReleaseYear] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const loadedMovies = getMovies();
-    setMovies(loadedMovies);
+    const loadMovies = async () => {
+      try {
+        const loadedMovies = await getMovies();
+        setMovies(loadedMovies);
+      } catch (error) {
+        console.error('Error loading movies:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadMovies();
   }, []);
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    setIsSearchOpen(false);
+    try {
+      const results = await searchMovies(query);
+      setMovies(results);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+    }
+  };
+
+  const handleLoadingComplete = () => {
+    setIsLoading(false);
+  };
 
   const availableYears = useMemo(() => {
     const years = [...new Set(movies.map(movie => movie.releaseDate))].sort((a, b) => b.localeCompare(a));
@@ -71,9 +102,19 @@ const HomePage = () => {
     setCurrentPage(1);
   }, [category, sortBy, releaseYear]);
 
+  if (isLoading) {
+    return <PreLoader onComplete={handleLoadingComplete} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onSearchOpen={() => setIsSearchOpen(true)} />
+      <SearchBar 
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSearch={handleSearch}
+        currentQuery={searchQuery}
+      />
       
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4">
@@ -137,6 +178,7 @@ const HomePage = () => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

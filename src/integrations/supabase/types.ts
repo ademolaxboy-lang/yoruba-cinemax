@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          movie_id: string
+          name: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          movie_id: string
+          name: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          movie_id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movies: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          download_link: string
+          genre: string
+          id: string
+          popularity: number
+          poster: string
+          rating: number
+          release_date: string
+          runtime: string
+          stars: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          download_link: string
+          genre: string
+          id?: string
+          popularity?: number
+          poster: string
+          rating?: number
+          release_date: string
+          runtime: string
+          stars?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          download_link?: string
+          genre?: string
+          id?: string
+          popularity?: number
+          poster?: string
+          rating?: number
+          release_date?: string
+          runtime?: string
+          stars?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      website_settings: {
+        Row: {
+          admin_password: string
+          advertise_email: string
+          contact_email: string
+          copyright_year: number
+          created_at: string
+          facebook_url: string | null
+          id: string
+          instagram_url: string | null
+          name: string
+          tagline: string
+          twitter_url: string | null
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          admin_password?: string
+          advertise_email?: string
+          contact_email?: string
+          copyright_year?: number
+          created_at?: string
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          name?: string
+          tagline?: string
+          twitter_url?: string | null
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          admin_password?: string
+          advertise_email?: string
+          contact_email?: string
+          copyright_year?: number
+          created_at?: string
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          name?: string
+          tagline?: string
+          twitter_url?: string | null
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

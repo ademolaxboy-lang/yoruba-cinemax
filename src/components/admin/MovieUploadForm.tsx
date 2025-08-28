@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Movie } from '@/types/movie';
-import { saveMovie, generateId } from '@/utils/storage';
+import { saveMovie, generateId } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

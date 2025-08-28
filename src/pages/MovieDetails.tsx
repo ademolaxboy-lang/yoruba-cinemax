@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Star, Clock, Calendar, Download, Users } from 'lucide-react';
 import { Movie, Comment } from '@/types/movie';
-import { getMovies, getCommentsForMovie, saveComment, generateId } from '@/utils/storage';
+import { getMovies, getCommentsForMovie, saveComment, generateId } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -17,14 +17,21 @@ const MovieDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const movies = getMovies();
-      const foundMovie = movies.find(m => m.id === id);
-      setMovie(foundMovie || null);
+    const loadMovieData = async () => {
+      if (id) {
+        try {
+          const movies = await getMovies();
+          const foundMovie = movies.find(m => m.id === id);
+          setMovie(foundMovie || null);
 
-      const movieComments = getCommentsForMovie(id);
-      setComments(movieComments);
-    }
+          const movieComments = await getCommentsForMovie(id);
+          setComments(movieComments);
+        } catch (error) {
+          console.error('Error loading movie data:', error);
+        }
+      }
+    };
+    loadMovieData();
   }, [id]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -45,7 +52,7 @@ const MovieDetails = () => {
     };
 
     try {
-      saveComment(comment);
+      await saveComment(comment);
       setComments(prev => [comment, ...prev]);
       setNewComment({ name: '', comment: '' });
       toast({ title: "Comment posted successfully!" });
