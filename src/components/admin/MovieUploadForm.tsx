@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Movie } from '@/types/movie';
-import { saveMovie, generateId } from '@/utils/supabase-storage';
+import { saveMovie, generateId, getAdminPassword } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +51,12 @@ const MovieUploadForm = ({ movie, onSuccess, onCancel }: MovieUploadFormProps) =
     setIsSubmitting(true);
 
     try {
+      const adminPassword = getAdminPassword();
+      if (!adminPassword) {
+        toast({ title: "Session expired. Please login again.", variant: "destructive" });
+        return;
+      }
+
       const movieData: Movie = {
         id: movie?.id || generateId(),
         title: formData.title.trim(),
@@ -67,7 +73,7 @@ const MovieUploadForm = ({ movie, onSuccess, onCancel }: MovieUploadFormProps) =
         createdAt: movie?.createdAt || new Date().toISOString()
       };
 
-      await saveMovie(movieData);
+      await saveMovie(movieData, adminPassword);
       toast({ title: movie ? "Movie updated successfully!" : "Movie added successfully!" });
       onSuccess();
     } catch (error) {

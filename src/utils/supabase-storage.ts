@@ -30,37 +30,63 @@ export const getMovies = async (): Promise<Movie[]> => {
   }));
 };
 
-export const saveMovie = async (movie: Movie): Promise<void> => {
-  const movieData = {
-    id: movie.id,
-    title: movie.title,
-    poster: movie.poster,
-    download_link: movie.downloadLink,
-    genre: movie.genre,
-    release_date: movie.releaseDate,
-    stars: movie.stars,
-    runtime: movie.runtime,
-    rating: movie.rating,
-    category: movie.category,
-    description: movie.description,
-    popularity: movie.popularity
-  };
-
-  const { error } = await supabase
-    .from('movies')
-    .upsert(movieData);
-  
-  if (error) {
+export const saveMovie = async (movie: Movie, adminPassword: string): Promise<void> => {
+  try {
+    if (movie.id && movie.createdAt) {
+      // Update existing movie
+      const { error } = await supabase.rpc('update_movie', {
+        p_id: movie.id,
+        p_title: movie.title,
+        p_poster: movie.poster,
+        p_download_link: movie.downloadLink,
+        p_genre: movie.genre,
+        p_release_date: movie.releaseDate,
+        p_stars: movie.stars,
+        p_runtime: movie.runtime,
+        p_rating: movie.rating,
+        p_category: movie.category,
+        p_description: movie.description || '',
+        p_popularity: movie.popularity,
+        p_admin_password: adminPassword
+      });
+      
+      if (error) {
+        console.error('Error updating movie:', error);
+        throw new Error('Failed to update movie');
+      }
+    } else {
+      // Add new movie
+      const { error } = await supabase.rpc('add_movie', {
+        p_title: movie.title,
+        p_poster: movie.poster,
+        p_download_link: movie.downloadLink,
+        p_genre: movie.genre,
+        p_release_date: movie.releaseDate,
+        p_stars: movie.stars,
+        p_runtime: movie.runtime,
+        p_rating: movie.rating,
+        p_category: movie.category,
+        p_description: movie.description || '',
+        p_popularity: movie.popularity,
+        p_admin_password: adminPassword
+      });
+      
+      if (error) {
+        console.error('Error adding movie:', error);
+        throw new Error('Failed to add movie');
+      }
+    }
+  } catch (error) {
     console.error('Error saving movie:', error);
     throw new Error('Failed to save movie');
   }
 };
 
-export const deleteMovie = async (movieId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('movies')
-    .delete()
-    .eq('id', movieId);
+export const deleteMovie = async (movieId: string, adminPassword: string): Promise<void> => {
+  const { error } = await supabase.rpc('delete_movie', {
+    p_id: movieId,
+    p_admin_password: adminPassword
+  });
   
   if (error) {
     console.error('Error deleting movie:', error);
@@ -157,11 +183,11 @@ export const saveComment = async (comment: Comment): Promise<void> => {
   }
 };
 
-export const deleteComment = async (commentId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('comments')
-    .delete()
-    .eq('id', commentId);
+export const deleteComment = async (commentId: string, adminPassword: string): Promise<void> => {
+  const { error } = await supabase.rpc('delete_comment', {
+    p_id: commentId,
+    p_admin_password: adminPassword
+  });
   
   if (error) {
     console.error('Error deleting comment:', error);
@@ -169,19 +195,16 @@ export const deleteComment = async (commentId: string): Promise<void> => {
   }
 };
 
-// Settings functions
+// Settings functions - Use secure public function that doesn't expose admin password
 export const getSettings = async (): Promise<WebsiteSettings> => {
-  const { data, error } = await supabase
-    .from('website_settings')
-    .select('*')
-    .limit(1);
+  const { data, error } = await supabase.rpc('get_public_settings');
   
   if (error || !data || data.length === 0) {
     console.error('Error fetching settings:', error);
     return {
       name: 'Yoruba Cinemax',
       tagline: 'Nigeria\'s Premier Yoruba Movie Destination',
-      adminPassword: 'Ademola5569',
+      adminPassword: '', // Never expose this in public API
       contactEmail: 'contact@yorubacinemax.com',
       advertiseEmail: 'advertise@yorubacinemax.com',
       copyrightYear: 2025,
@@ -196,7 +219,7 @@ export const getSettings = async (): Promise<WebsiteSettings> => {
   return {
     name: settings.name,
     tagline: settings.tagline,
-    adminPassword: settings.admin_password,
+    adminPassword: '', // Never expose this in public API
     contactEmail: settings.contact_email,
     advertiseEmail: settings.advertise_email,
     copyrightYear: settings.copyright_year,
@@ -207,22 +230,39 @@ export const getSettings = async (): Promise<WebsiteSettings> => {
   };
 };
 
-export const saveSettings = async (settings: WebsiteSettings): Promise<void> => {
-  const { error } = await supabase
-    .from('website_settings')
-    .update({
-      name: settings.name,
-      tagline: settings.tagline,
-      admin_password: settings.adminPassword,
-      contact_email: settings.contactEmail,
-      advertise_email: settings.advertiseEmail,
-      copyright_year: settings.copyrightYear,
-      facebook_url: settings.facebookUrl,
-      twitter_url: settings.twitterUrl,
-      instagram_url: settings.instagramUrl,
-      youtube_url: settings.youtubeUrl
-    })
-    .eq('id', (await supabase.from('website_settings').select('id').limit(1)).data?.[0]?.id);
+// Admin-only function to get settings with password (used for verification only)
+export const verifyAdminPassword = async (password: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('website_settings')
+      .select('admin_password')
+      .limit(1);
+    
+    if (error || !data || data.length === 0) {
+      return false;
+    }
+    
+    return data[0].admin_password === password;
+  } catch (error) {
+    console.error('Error verifying admin password:', error);
+    return false;
+  }
+};
+
+export const saveSettings = async (settings: WebsiteSettings, currentAdminPassword: string): Promise<void> => {
+  const { error } = await supabase.rpc('update_website_settings', {
+    p_name: settings.name,
+    p_tagline: settings.tagline,
+    p_admin_password: settings.adminPassword,
+    p_contact_email: settings.contactEmail,
+    p_advertise_email: settings.advertiseEmail,
+    p_copyright_year: settings.copyrightYear,
+    p_facebook_url: settings.facebookUrl || '',
+    p_twitter_url: settings.twitterUrl || '',
+    p_instagram_url: settings.instagramUrl || '',
+    p_youtube_url: settings.youtubeUrl || '',
+    p_current_admin_password: currentAdminPassword
+  });
   
   if (error) {
     console.error('Error saving settings:', error);
@@ -257,4 +297,17 @@ export const setAdminAuthenticated = (): void => {
 
 export const clearAdminAuthentication = (): void => {
   localStorage.removeItem('yoruba-cinemax-admin-auth');
+};
+
+// Secure admin password storage in session (never in localStorage for security)
+export const setAdminPassword = (password: string): void => {
+  sessionStorage.setItem('yoruba-cinemax-admin-session', password);
+};
+
+export const getAdminPassword = (): string | null => {
+  return sessionStorage.getItem('yoruba-cinemax-admin-session');
+};
+
+export const clearAdminPassword = (): void => {
+  sessionStorage.removeItem('yoruba-cinemax-admin-session');
 };

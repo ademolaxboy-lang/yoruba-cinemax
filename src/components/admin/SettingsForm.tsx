@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { WebsiteSettings } from '@/types/movie';
-import { getSettings, saveSettings } from '@/utils/supabase-storage';
+import { getSettings, saveSettings, getAdminPassword } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,7 +42,13 @@ const SettingsForm = () => {
     setIsSubmitting(true);
 
     try {
-      await saveSettings(settings);
+      const currentAdminPassword = getAdminPassword();
+      if (!currentAdminPassword) {
+        toast({ title: "Session expired. Please login again.", variant: "destructive" });
+        return;
+      }
+      
+      await saveSettings(settings, currentAdminPassword);
       toast({ title: "Settings updated successfully!" });
     } catch (error) {
       toast({ title: "Failed to update settings", variant: "destructive" });

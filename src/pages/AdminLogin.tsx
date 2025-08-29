@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getSettings, setAdminAuthenticated } from '@/utils/storage';
+import { verifyAdminPassword, setAdminAuthenticated, setAdminPassword, isAdminAuthenticated } from '@/utils/supabase-storage';
 import { toast } from '@/hooks/use-toast';
 
 const AdminLogin = () => {
@@ -15,17 +15,22 @@ const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const settings = getSettings();
-    
-    if (password === settings.adminPassword) {
-      setAdminAuthenticated();
-      toast({ title: "Login successful!" });
-      navigate('/admin/dashboard');
-    } else {
-      toast({ title: "Invalid password", variant: "destructive" });
+    try {
+      const isValid = await verifyAdminPassword(password);
+      
+      if (isValid) {
+        setAdminAuthenticated();
+        setAdminPassword(password); // Store in session for admin operations
+        toast({ title: "Login successful!" });
+        navigate('/admin/dashboard');
+      } else {
+        toast({ title: "Invalid password", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Login failed", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (

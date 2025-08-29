@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Settings, LogOut, MessageSquare } from 'lucide-react';
 import { Movie, Comment } from '@/types/movie';
-import { getMovies, getComments, deleteMovie, deleteComment, isAdminAuthenticated, clearAdminAuthentication } from '@/utils/supabase-storage';
+import { getMovies, getComments, deleteMovie, deleteComment, isAdminAuthenticated, clearAdminAuthentication, getAdminPassword, clearAdminPassword } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,6 +42,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     clearAdminAuthentication();
+    clearAdminPassword(); // Clear password from session for security
     toast({ title: "Logged out successfully" });
     navigate('/');
   };
@@ -49,7 +50,13 @@ const AdminDashboard = () => {
   const handleDeleteMovie = async (movieId: string) => {
     if (confirm('Are you sure you want to delete this movie? This will also delete all related comments.')) {
       try {
-        await deleteMovie(movieId);
+        const adminPassword = getAdminPassword();
+        if (!adminPassword) {
+          toast({ title: "Session expired. Please login again.", variant: "destructive" });
+          return;
+        }
+        
+        await deleteMovie(movieId, adminPassword);
         await loadData();
         toast({ title: "Movie deleted successfully" });
       } catch (error) {
@@ -61,7 +68,13 @@ const AdminDashboard = () => {
   const handleDeleteComment = async (commentId: string) => {
     if (confirm('Are you sure you want to delete this comment?')) {
       try {
-        await deleteComment(commentId);
+        const adminPassword = getAdminPassword();
+        if (!adminPassword) {
+          toast({ title: "Session expired. Please login again.", variant: "destructive" });
+          return;
+        }
+        
+        await deleteComment(commentId, adminPassword);
         await loadData();
         toast({ title: "Comment deleted successfully" });
       } catch (error) {

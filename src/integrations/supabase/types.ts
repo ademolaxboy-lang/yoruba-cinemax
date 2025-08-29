@@ -167,6 +167,62 @@ export type Database = {
         }
         Returns: string
       }
+      delete_comment: {
+        Args: { p_admin_password: string; p_id: string }
+        Returns: undefined
+      }
+      delete_movie: {
+        Args: { p_admin_password: string; p_id: string }
+        Returns: undefined
+      }
+      get_public_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          advertise_email: string
+          contact_email: string
+          copyright_year: number
+          facebook_url: string
+          instagram_url: string
+          name: string
+          tagline: string
+          twitter_url: string
+          youtube_url: string
+        }[]
+      }
+      update_movie: {
+        Args: {
+          p_admin_password: string
+          p_category: string
+          p_description: string
+          p_download_link: string
+          p_genre: string
+          p_id: string
+          p_popularity: number
+          p_poster: string
+          p_rating: number
+          p_release_date: string
+          p_runtime: string
+          p_stars: string[]
+          p_title: string
+        }
+        Returns: undefined
+      }
+      update_website_settings: {
+        Args: {
+          p_admin_password: string
+          p_advertise_email: string
+          p_contact_email: string
+          p_copyright_year: number
+          p_current_admin_password: string
+          p_facebook_url: string
+          p_instagram_url: string
+          p_name: string
+          p_tagline: string
+          p_twitter_url: string
+          p_youtube_url: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
