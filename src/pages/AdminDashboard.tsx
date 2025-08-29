@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Settings, LogOut, MessageSquare } from 'lucide-react';
 import { Movie, Comment } from '@/types/movie';
-import { getMovies, getComments, deleteMovie, deleteComment, isAdminAuthenticated, clearAdminAuthentication } from '@/utils/storage';
+import { getMovies, getComments, deleteMovie, deleteComment, isAdminAuthenticated, clearAdminAuthentication } from '@/utils/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,9 +29,15 @@ const AdminDashboard = () => {
     loadData();
   }, [navigate]);
 
-  const loadData = () => {
-    setMovies(getMovies());
-    setComments(getComments());
+  const loadData = async () => {
+    try {
+      const moviesData = await getMovies();
+      const commentsData = await getComments();
+      setMovies(moviesData);
+      setComments(commentsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -40,19 +46,27 @@ const AdminDashboard = () => {
     navigate('/');
   };
 
-  const handleDeleteMovie = (movieId: string) => {
+  const handleDeleteMovie = async (movieId: string) => {
     if (confirm('Are you sure you want to delete this movie? This will also delete all related comments.')) {
-      deleteMovie(movieId);
-      loadData();
-      toast({ title: "Movie deleted successfully" });
+      try {
+        await deleteMovie(movieId);
+        await loadData();
+        toast({ title: "Movie deleted successfully" });
+      } catch (error) {
+        toast({ title: "Failed to delete movie", variant: "destructive" });
+      }
     }
   };
 
-  const handleDeleteComment = (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
     if (confirm('Are you sure you want to delete this comment?')) {
-      deleteComment(commentId);
-      loadData();
-      toast({ title: "Comment deleted successfully" });
+      try {
+        await deleteComment(commentId);
+        await loadData();
+        toast({ title: "Comment deleted successfully" });
+      } catch (error) {
+        toast({ title: "Failed to delete comment", variant: "destructive" });
+      }
     }
   };
 
@@ -62,8 +76,8 @@ const AdminDashboard = () => {
     movie.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleMovieUpdate = () => {
-    loadData();
+  const handleMovieUpdate = async () => {
+    await loadData();
     setIsUploadOpen(false);
     setEditingMovie(null);
   };
@@ -89,33 +103,38 @@ const AdminDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="movies" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="movies">Movies ({movies.length})</TabsTrigger>
-            <TabsTrigger value="comments">Comments ({comments.length})</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="movies" className="text-sm md:text-base">
+              <span className="hidden sm:inline">Movies </span>({movies.length})
+            </TabsTrigger>
+            <TabsTrigger value="comments" className="text-sm md:text-base">
+              <span className="hidden sm:inline">Comments </span>({comments.length})
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-sm md:text-base">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="movies" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center space-x-4 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
                   <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   <Input
                     placeholder="Search movies..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-full sm:w-64"
                   />
                 </div>
               </div>
               
               <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => setEditingMovie(null)}>
+                  <Button onClick={() => setEditingMovie(null)} className="w-full sm:w-auto">
                     <Plus size={16} className="mr-2" />
-                    Add Movie
+                    <span className="hidden sm:inline">Add Movie</span>
+                    <span className="sm:hidden">Add</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                   <DialogHeader>
                     <DialogTitle>{editingMovie ? 'Edit Movie' : 'Add New Movie'}</DialogTitle>
                   </DialogHeader>
@@ -135,20 +154,20 @@ const AdminDashboard = () => {
               {filteredMovies.length > 0 ? (
                 filteredMovies.map((movie) => (
                   <div key={movie.id} className="card-premium rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center space-x-4 flex-1 min-w-0">
                         <img
                           src={movie.poster}
                           alt={movie.title}
-                          className="w-16 h-20 object-cover rounded"
+                          className="w-12 h-16 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
                         />
-                        <div>
-                          <h3 className="font-semibold text-foreground">{movie.title}</h3>
-                          <p className="text-sm text-muted-foreground">{movie.genre} • {movie.category}</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate">{movie.title}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{movie.genre} • {movie.category}</p>
                           <p className="text-xs text-muted-foreground">{movie.releaseDate}</p>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 flex-shrink-0 w-full sm:w-auto">
                         <Button
                           size="sm"
                           variant="outline"
@@ -156,15 +175,19 @@ const AdminDashboard = () => {
                             setEditingMovie(movie);
                             setIsUploadOpen(true);
                           }}
+                          className="flex-1 sm:flex-none"
                         >
-                          <Edit size={16} />
+                          <Edit size={16} className="sm:mr-0 mr-2" />
+                          <span className="sm:hidden">Edit</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteMovie(movie.id)}
+                          className="flex-1 sm:flex-none"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="sm:mr-0 mr-2" />
+                          <span className="sm:hidden">Delete</span>
                         </Button>
                       </div>
                     </div>
@@ -185,15 +208,15 @@ const AdminDashboard = () => {
                   const movie = movies.find(m => m.id === comment.movieId);
                   return (
                     <div key={comment.id} className="card-premium rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
                             <span className="font-semibold text-foreground">{comment.name}</span>
                             <span className="text-sm text-muted-foreground">
                               on {movie?.title || 'Unknown Movie'}
                             </span>
                           </div>
-                          <p className="text-muted-foreground mb-2">{comment.comment}</p>
+                          <p className="text-muted-foreground mb-2 break-words">{comment.comment}</p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(comment.timestamp).toLocaleString()}
                           </p>
@@ -202,8 +225,10 @@ const AdminDashboard = () => {
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteComment(comment.id)}
+                          className="flex-shrink-0 w-full sm:w-auto"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="sm:mr-0 mr-2" />
+                          <span className="sm:hidden">Delete</span>
                         </Button>
                       </div>
                     </div>

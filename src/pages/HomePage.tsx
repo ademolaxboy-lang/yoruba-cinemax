@@ -7,13 +7,13 @@ import MovieCard from '@/components/MovieCard';
 import Filters from '@/components/Filters';
 import Pagination from '@/components/Pagination';
 import SearchBar from '@/components/SearchBar';
-import PreLoader from '@/components/PreLoader';
+
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const MOVIES_PER_PAGE = 8;
 
 const HomePage = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  
   const [movies, setMovies] = useState<Movie[]>([]);
   const [category, setCategory] = useState<FilterCategory>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -30,8 +30,6 @@ const HomePage = () => {
         setMovies(loadedMovies);
       } catch (error) {
         console.error('Error loading movies:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     loadMovies();
@@ -49,9 +47,6 @@ const HomePage = () => {
     }
   };
 
-  const handleLoadingComplete = () => {
-    setIsLoading(false);
-  };
 
   const availableYears = useMemo(() => {
     const years = [...new Set(movies.map(movie => movie.releaseDate))].sort((a, b) => b.localeCompare(a));
@@ -102,9 +97,6 @@ const HomePage = () => {
     setCurrentPage(1);
   }, [category, sortBy, releaseYear]);
 
-  if (isLoading) {
-    return <PreLoader onComplete={handleLoadingComplete} />;
-  }
 
   return (
     <div className="min-h-screen bg-background">

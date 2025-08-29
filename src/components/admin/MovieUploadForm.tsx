@@ -67,7 +67,7 @@ const MovieUploadForm = ({ movie, onSuccess, onCancel }: MovieUploadFormProps) =
         createdAt: movie?.createdAt || new Date().toISOString()
       };
 
-      saveMovie(movieData);
+      await saveMovie(movieData);
       toast({ title: movie ? "Movie updated successfully!" : "Movie added successfully!" });
       onSuccess();
     } catch (error) {
