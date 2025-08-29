@@ -150,7 +150,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_movie: {
+        Args: {
+          p_admin_password: string
+          p_category: string
+          p_description: string
+          p_download_link: string
+          p_genre: string
+          p_popularity: number
+          p_poster: string
+          p_rating: number
+          p_release_date: string
+          p_runtime: string
+          p_stars: string[]
+          p_title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
